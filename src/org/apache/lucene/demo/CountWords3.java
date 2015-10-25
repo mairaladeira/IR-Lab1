@@ -1,4 +1,4 @@
-package org.apache.lucene.demo; /**
+/**
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -20,20 +20,18 @@ package org.apache.lucene.demo; /**
  * Based on the org.lucene.demo.SearchFiles class
  */
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FileUtils;
 
 //import org.apache.lucene.analysis.Analyzer;
 //import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.demo.Stemmer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.TermDocs;
@@ -52,10 +50,9 @@ import org.apache.lucene.store.FSDirectory;
  * total count (not document count, but total number of occurrences 
  * in the indexed document collection). Order as provided by the index */
 public class CountWords3 {
-    private static boolean removeStopStopWords = false;
-    private static boolean potterStemming = false;
 
-
+    private static boolean useStemmer = true;
+    private static boolean removeStopWords = true;
     private CountWords3() {}
 
     public static boolean isNumeric(String str) {
@@ -107,6 +104,21 @@ public class CountWords3 {
         return false;
     }
 
+    /**
+     * Simple implementation of the Porter's stemming algorithm. From: http://nlp.stanford.edu/IR-book/html/htmledition/stemming-and-lemmatization-1.html
+     * @param w
+     * @return
+     */
+    protected static String porterStemming(String w) {
+        Stemmer s = new Stemmer();
+        char[] chars = w.toCharArray();
+        for(char c: chars) {
+            s.add(c);
+        }
+        s.stem();
+        return s.toString();
+    }
+
     private static Map<String, Integer> sortByComparator(Map<String, Integer> unsortMap, final boolean order) {
 
         List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(unsortMap.entrySet());
@@ -139,6 +151,22 @@ public class CountWords3 {
         return sortedMap;
     }
 
+    public static boolean isStopWord(File f, String w){
+        try {
+            Scanner scanner = new Scanner(f);
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                if(line.contains(w)) {
+                    return true;
+                }
+            }
+
+        } catch(FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public static void main(String[] args) throws Exception {
 
         if (args.length != 1) {
@@ -158,29 +186,34 @@ public class CountWords3 {
         int i = 0;
         boolean notlastt = te.next();
         Map<String, Integer> terms = new HashMap<>();
+
+        File stopWords = new File("./src/org/apache/lucene/demo/stopwords_long_EN.txt");
+
         while (notlastt) {
             Term t = te.term();
             if (t.field() == field) {   // ignore if not desired field
                 if(!removeTerm(t.text())) {
-                    //t = t.createTerm(removePunctuation(t.text()));
-                    TermDocs td = reader.termDocs(t);
-                    int n = 0;
-                    boolean notlastd = td.next();
-                    while (notlastd) {
-                       n += td.freq();
-                       notlastd = td.next();
+                    if(!removeStopWords || !isStopWord(stopWords, t.text())) {
+                        TermDocs td = reader.termDocs(t);
+                        int n = 0;
+                        boolean notlastd = td.next();
+                        while (notlastd) {
+                            n += td.freq();
+                            notlastd = td.next();
+                        }
+                        String text = removePunctuation(t.text());
+                        if (useStemmer) text = porterStemming(text);
+                        Integer value;
+                        if (terms.containsKey(text)) {
+                            value = n + terms.get(text);
+                        } else {
+                            value = n;
+                        }
+                        terms.put(text, value);
+                        //System.out.println(t.text() + " " + n);
+                        totalOccs += n;
+                        ++i;
                     }
-                    String text = removePunctuation(t.text());
-                    Integer value;
-                    if(terms.containsKey(text)) {
-                        value = n + terms.get(text);
-                    } else {
-                        value = n;
-                    }
-                    terms.put(text, value);
-                    //System.out.println(t.text() + " " + n);
-                    totalOccs += n;
-                    ++i;
                 }
             }
             notlastt = te.next();
@@ -188,11 +221,11 @@ public class CountWords3 {
         terms = sortByComparator(terms, false);
         int j = 1;
         for (Map.Entry entry : terms.entrySet()) {
-            System.out.print(entry.getKey() + " ");
-            System.out.print(entry.getValue() + " ");
+            System.out.print(entry.getKey() + "   ");
+            System.out.print(entry.getValue() + "   ");
             System.out.println(j);
             j += 1;
         }
-        System.out.println("Distinct words: "+i+"; Word occurrences: "+totalOccs);
+        System.out.println("Distinct words: "+terms.size()+"; Word occurrences: "+totalOccs);
     }
 }
