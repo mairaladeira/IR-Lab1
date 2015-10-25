@@ -51,6 +51,8 @@ public class CountWords3 {
 
     private static boolean useStemmer = true;
     private static boolean removeStopWords = true;
+    private static HashSet<String> stopWords = new HashSet<>();
+
     private CountWords3() {}
 
     public static boolean isNumeric(String str) {
@@ -149,14 +151,12 @@ public class CountWords3 {
         return sortedMap;
     }
 
-    public static boolean isStopWord(File f, String w){
+    public static boolean setStopWords(File f){
         try {
             Scanner scanner = new Scanner(f);
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                if(line.equals(w)) {
-                    return true;
-                }
+                stopWords.add(line);
             }
 
         } catch(FileNotFoundException e) {
@@ -185,13 +185,16 @@ public class CountWords3 {
         boolean notlastt = te.next();
         Map<String, Integer> terms = new HashMap<>();
 
-        File stopWords = new File("./src/org/apache/lucene/demo/stopwords_long_EN.txt");
+        if(removeStopWords) {
+            File stopWordsFile = new File("./src/org/apache/lucene/demo/stopwords_long_EN.txt");
+            setStopWords(stopWordsFile);
+        }
 
         while (notlastt) {
             Term t = te.term();
             if (t.field() == field) {   // ignore if not desired field
                 if(!removeTerm(t.text())) {
-                    if(!removeStopWords || !isStopWord(stopWords, t.text())) {
+                    if(!removeStopWords || !stopWords.contains(t.text())) {
                         TermDocs td = reader.termDocs(t);
                         int n = 0;
                         boolean notlastd = td.next();

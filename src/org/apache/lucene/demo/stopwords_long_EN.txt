@@ -1,4 +1,3 @@
-// Source: http://dev.mysql.com/doc/refman/5.1/en/fulltext-stopwords.html
 a
 able
 about
