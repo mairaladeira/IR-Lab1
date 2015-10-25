@@ -26,8 +26,6 @@ import java.text.ParsePosition;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import org.apache.commons.io.FileUtils;
 
 //import org.apache.lucene.analysis.Analyzer;
 //import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -156,7 +154,7 @@ public class CountWords3 {
             Scanner scanner = new Scanner(f);
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                if(line.contains(w)) {
+                if(line.equals(w)) {
                     return true;
                 }
             }
