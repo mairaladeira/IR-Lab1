@@ -1,4 +1,4 @@
-/**
+package org.apache.lucene.demo; /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -27,9 +27,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
-import java.util.Date;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 //import org.apache.lucene.analysis.Analyzer;
 //import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -51,6 +52,9 @@ import org.apache.lucene.store.FSDirectory;
  * total count (not document count, but total number of occurrences 
  * in the indexed document collection). Order as provided by the index */
 public class CountWords3 {
+    private static boolean removeStopStopWords = false;
+    private static boolean potterStemming = false;
+
 
     private CountWords3() {}
 
@@ -103,6 +107,38 @@ public class CountWords3 {
         return false;
     }
 
+    private static Map<String, Integer> sortByComparator(Map<String, Integer> unsortMap, final boolean order) {
+
+        List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>(unsortMap.entrySet());
+
+        // Sorting the list based on values
+        Collections.sort(list, new Comparator<Map.Entry<String, Integer>>()
+        {
+            public int compare(Map.Entry<String, Integer> o1,
+                               Map.Entry<String, Integer> o2)
+            {
+                if (order)
+                {
+                    return o1.getValue().compareTo(o2.getValue());
+                }
+                else
+                {
+                    return o2.getValue().compareTo(o1.getValue());
+
+                }
+            }
+        });
+
+        // Maintaining insertion order with the help of LinkedList
+        Map<String, Integer> sortedMap = new LinkedHashMap<String, Integer>();
+        for (Map.Entry<String, Integer> entry : list)
+        {
+            sortedMap.put(entry.getKey(), entry.getValue());
+        }
+
+        return sortedMap;
+    }
+
     public static void main(String[] args) throws Exception {
 
         if (args.length != 1) {
@@ -121,10 +157,12 @@ public class CountWords3 {
         int totalOccs = 0;
         int i = 0;
         boolean notlastt = te.next();
+        Map<String, Integer> terms = new HashMap<>();
         while (notlastt) {
             Term t = te.term();
             if (t.field() == field) {   // ignore if not desired field
                 if(!removeTerm(t.text())) {
+                    //t = t.createTerm(removePunctuation(t.text()));
                     TermDocs td = reader.termDocs(t);
                     int n = 0;
                     boolean notlastd = td.next();
@@ -132,12 +170,28 @@ public class CountWords3 {
                        n += td.freq();
                        notlastd = td.next();
                     }
-                    System.out.println(t.text() + " " + n);
+                    String text = removePunctuation(t.text());
+                    Integer value;
+                    if(terms.containsKey(text)) {
+                        value = n + terms.get(text);
+                    } else {
+                        value = n;
+                    }
+                    terms.put(text, value);
+                    //System.out.println(t.text() + " " + n);
                     totalOccs += n;
                     ++i;
                 }
             }
             notlastt = te.next();
+        }
+        terms = sortByComparator(terms, false);
+        int j = 1;
+        for (Map.Entry entry : terms.entrySet()) {
+            System.out.print(entry.getKey() + " ");
+            System.out.print(entry.getValue() + " ");
+            System.out.println(j);
+            j += 1;
         }
         System.out.println("Distinct words: "+i+"; Word occurrences: "+totalOccs);
     }
