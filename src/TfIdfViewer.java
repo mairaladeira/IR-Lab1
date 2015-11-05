@@ -42,7 +42,26 @@ import org.apache.lucene.util.Version;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermFreqVector;
 
-/** Prints documents in tf-idf vector format and computes cosine similarities */
+
+
+
+/** Prints documents in tf-idf vector format and computes cosine similarities
+ *
+ * GROUP: Gabriela Hernandez Larios and Maira Machado Ladeira
+ *
+ * CHANGES PERFORMED TO THE FILE:
+ * - toTfIdf function: the tf and idf factors were calculated and the result tf-idf weight for each term of a
+ *   document as a vector was returned.
+ * - normalize function: the return type was changed to double and the normalization of a vector of tf-idf weights
+ *   was calculated and returned.
+ * - printTermWeightVector function: a simple code to run over a vector of tf-idf weights and print each term and
+ *   its weight with the format (term, weight) was developed.
+ * - cosineSimilarity function: the cosine similarity between 2 documents (d1 and d2) was calculated using the
+ *   following equation: cos_sim(d1,d2) = (d1*d2)/|d1|*|d2|
+ * - main function: a division between the print of the first document's terms weights vector and the second document's
+ *   one was added in order to simplify the visualization of the results
+ *
+ * */
 public class TfIdfViewer {
 
     /** Simple command-line based search demo. */
@@ -81,19 +100,16 @@ public class TfIdfViewer {
             in = new BufferedReader(new InputStreamReader(System.in, "UTF-8"));
         }
 
-        //int i = 0;
         while (true) {
 
             // get two filenames
             System.out.println("Enter filename 1 (or hit <RETURN>): ");
             String f1 = in.readLine();
-            //String f1 = "testfiles/t1.txt";
             if (f1 == null || f1.length() == -1) break;
             f1 = f1.trim(); if (f1.length() == 0) break;
 
             System.out.println("Enter filename 2: ");
             String f2 = in.readLine();
-            //String f2 = "testfiles/t5.txt";
 
             // get the docId's of the two filenames in the index
             int id1 = findDocId(searcher,f1);
@@ -107,12 +123,12 @@ public class TfIdfViewer {
 
             // print them out,
             printTermWeightVector(v1);
+            System.out.println("-----------------------");
             printTermWeightVector(v2);
 
             // and print their cosine similarity
             System.out.println("The cosine similarity of the two files is: "+cosineSimilarity(v1,v2));
 
-            //i ++;
         }
         searcher.close();
         reader.close();
@@ -157,7 +173,7 @@ public class TfIdfViewer {
         Double tf;
         Double idf;
         for (int i = 0; i < tw.length; i++) {
-            double df = reader.docFreq(new Term("contents", terms[i]));
+            double df = docFreq(reader, terms[i]);
             tf = freqs[i]/fmax;
             idf = Math.log10((nDocs / df));
             Double tf_idf = tf*idf;
@@ -168,14 +184,12 @@ public class TfIdfViewer {
 
     // Normalizes the weights in t so that they form a unit-length vector
     // It is assumed that not all weights are 0
-    private static TermWeight[] normalize(TermWeight[] t) {
+    private static double normalize(TermWeight[] t) {
         Double results = 0.0;
-        TermWeight[] rw = new TermWeight[1];
         for (TermWeight aT : t) {
             results += aT.getWeight() * aT.getWeight();
         }
-        rw[0] = new TermWeight("normalization", Math.sqrt(results));
-        return rw;
+        return results;
     }
 
     // prints the list of pairs (term,weight) in v
@@ -188,8 +202,6 @@ public class TfIdfViewer {
     // returns the cosine similarity of (the documents represented by) v1 and v2
     // and, as a side effect, normalizes them
     private static double cosineSimilarity(TermWeight[] v1, TermWeight[] v2) {
-        double norm_v1 = normalize(v1)[0].getWeight();
-        double norm_v2 = normalize(v2)[0].getWeight();
         double v1v2 = 0.0;
         int iv1 = 0;
         int iv2 = 0;
@@ -209,6 +221,8 @@ public class TfIdfViewer {
                 iv2 ++;
             }
         }
+        double norm_v1 = normalize(v1);
+        double norm_v2 = normalize(v2);
         return (v1v2/(norm_v1*norm_v2));
     }
 
