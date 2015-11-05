@@ -122,9 +122,11 @@ public class TfIdfViewer {
             TermWeight[] v2 = toTfIdf(reader,id2);
 
             // print them out,
+            System.out.println("-----------------------");
             printTermWeightVector(v1);
             System.out.println("-----------------------");
             printTermWeightVector(v2);
+            System.out.println("-----------------------");
 
             // and print their cosine similarity
             System.out.println("The cosine similarity of the two files is: "+cosineSimilarity(v1,v2));
@@ -189,7 +191,7 @@ public class TfIdfViewer {
         for (TermWeight aT : t) {
             results += aT.getWeight() * aT.getWeight();
         }
-        return results;
+        return Math.sqrt(results);
     }
 
     // prints the list of pairs (term,weight) in v
