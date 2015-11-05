@@ -78,6 +78,17 @@ public class IndexFiles {
     if (!docDir.exists() || !docDir.canRead()) {
       System.out.println("Document directory '" +docDir.getAbsolutePath()+ "' does not exist or is not readable, please check the path");
       System.exit(1);
+    } else {
+      for(File faux: docDir.listFiles()){
+        if(faux.getName().equals(".DS_Store")) {
+          try {
+            boolean s = faux.delete();
+            System.out.println(s);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+      }
     }
     
     Date start = new Date();
@@ -192,7 +203,7 @@ public class IndexFiles {
           // so that the text of the file is tokenized and indexed, but not stored.
           // Note that FileReader expects the file to be in UTF-8 encoding.
           // If that's not the case searching for special characters will fail.
-          doc.add(new Field("contents", new BufferedReader(new InputStreamReader(fis, "UTF-8"))));
+          doc.add(new Field("contents", new BufferedReader(new InputStreamReader(fis, "UTF-8")), Field.TermVector.YES));
 
           if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
             // New index, so we just add the document (no old document can be there):

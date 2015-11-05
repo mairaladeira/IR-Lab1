@@ -192,7 +192,7 @@ public class CountWords3 {
 
         while (notlastt) {
             Term t = te.term();
-            if (t.field() == field) {   // ignore if not desired field
+            if (t.field().equals(field) ) {   // ignore if not desired field
                 if(!removeTerm(t.text())) {
                     if(!removeStopWords || !stopWords.contains(t.text())) {
                         TermDocs td = reader.termDocs(t);
@@ -202,7 +202,8 @@ public class CountWords3 {
                             n += td.freq();
                             notlastd = td.next();
                         }
-                        String text = removePunctuation(t.text());
+                        String text = t.text();
+                        //String text = removePunctuation(t.text());
                         if (useStemmer) text = porterStemming(text);
                         Integer value;
                         if (terms.containsKey(text)) {
@@ -221,12 +222,12 @@ public class CountWords3 {
         }
         terms = sortByComparator(terms, false);
         int j = 1;
-        for (Map.Entry entry : terms.entrySet()) {
+        /*for (Map.Entry entry : terms.entrySet()) {
             System.out.print(entry.getKey() + "   ");
             System.out.print(entry.getValue() + "   ");
             System.out.println(j);
             j += 1;
-        }
+        }*/
         System.out.println("Distinct words: "+terms.size()+"; Word occurrences: "+totalOccs);
     }
 }
