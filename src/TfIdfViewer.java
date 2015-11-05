@@ -81,18 +81,19 @@ public class TfIdfViewer {
             in = new BufferedReader(new InputStreamReader(System.in, "UTF-8"));
         }
 
+        //int i = 0;
         while (true) {
 
             // get two filenames
             System.out.println("Enter filename 1 (or hit <RETURN>): ");
             String f1 = in.readLine();
-            //String f1 = "novels/pg2482.txt";
+            //String f1 = "testfiles/t1.txt";
             if (f1 == null || f1.length() == -1) break;
             f1 = f1.trim(); if (f1.length() == 0) break;
 
             System.out.println("Enter filename 2: ");
             String f2 = in.readLine();
-            //String f2 = "novels/pg1410.txt";
+            //String f2 = "testfiles/t5.txt";
 
             // get the docId's of the two filenames in the index
             int id1 = findDocId(searcher,f1);
@@ -110,6 +111,8 @@ public class TfIdfViewer {
 
             // and print their cosine similarity
             System.out.println("The cosine similarity of the two files is: "+cosineSimilarity(v1,v2));
+
+            //i ++;
         }
         searcher.close();
         reader.close();
@@ -154,9 +157,9 @@ public class TfIdfViewer {
         Double tf;
         Double idf;
         for (int i = 0; i < tw.length; i++) {
-            int df = reader.docFreq(new Term("contents", terms[i]));
+            double df = reader.docFreq(new Term("contents", terms[i]));
             tf = freqs[i]/fmax;
-            idf = Math.log10((double) (nDocs / df));
+            idf = Math.log10((nDocs / df));
             Double tf_idf = tf*idf;
             tw[i] = new TermWeight(terms[i],tf_idf);
         }
